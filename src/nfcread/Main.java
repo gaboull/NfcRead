@@ -22,34 +22,33 @@ public class Main {
 
     private static final Logger LOG = Logger.getLogger(Main.class.getName());
 
-    private static long toDec(byte[] bytes) {
+    private static String readableHex(byte[] src, int from, int length) {
+        StringBuilder answer = new StringBuilder();
+        for (int i = from; i < from + length; i++) {
+            answer.append(String.format("%02X", src[i]));
+        }
+        return answer.toString();
+    }
+
+    private static String readableDec(byte[] src, int from, int length) {
+        StringBuilder answer = new StringBuilder();
+        for (int i = from; i < from + length; i++) {
+            answer.append(String.format("%02d ", src[i] & 0xFFFFFFFFL));
+        }
+        return answer.toString();
+    }
+    
+    private static long toLong(byte[] bytes) {
         long result = 0;
         long factor = 1;
-
-        for (int i = 5; i < bytes.length - 2; ++i) {
+        for (int i = 5; i < bytes.length-2; ++i) {
             long value = bytes[i] & 0xffl;
             result += value * factor;
             factor *= 256l;
         }
-
         return result;
-    }
-
-    private static String toHex(byte[] bytes) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = bytes.length - 3; i >= 5; --i) {
-            int b = bytes[i] & 0xff;
-            if (b < 0x10) {
-                sb.append('0');
-            }
-            sb.append(Integer.toHexString(b));
-            if (i > 0) {
-                sb.append(" ");
-            }
-        }
-        return sb.toString();
-    }
-
+    }    
+    
     private static void init() throws ClassNotFoundException, NoSuchFieldException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         Class pcscterminal = Class.forName("sun.security.smartcardio.PCSCTerminals");
         Field contextId = pcscterminal.getDeclaredField("contextId");
@@ -89,19 +88,27 @@ public class Main {
             List<CardTerminal> cardTerminalList = terminalFactory.terminals().list();
             if (id <= cardTerminalList.size()) {
                 CardTerminal cardTerminal = cardTerminalList.get(id - 1);
-                do {
-                    LOG.log(Level.INFO, "Reading terminal {0}", id);
+                do {                    
+                    LOG.log(Level.INFO, "Waiting for terminal {0}", id);
                     cardTerminal.waitForCardPresent(0);
 
-                    Card card = cardTerminal.connect("T=1");
+                    LOG.log(Level.INFO, "Card present, reading terminal {0}", id);
+                    Card card = cardTerminal.connect("*");
                     CardChannel channel = card.getBasicChannel();
-                    CommandAPDU command = new CommandAPDU(new byte[]{(byte) 0xFF, (byte) 0xB0, (byte) 0x00, (byte) 0x04, (byte) 0x04});
-                    ResponseAPDU response = channel.transmit(command);
-                    LOG.log(Level.INFO, "Data:{0}", toHex(response.getData()));
-                    LOG.log(Level.INFO, "Atr :{0}", toDec(card.getATR().getBytes()));
+                    // Read UUID
+                    //CommandAPDU command = new CommandAPDU(new byte[]{(byte) 0xff, (byte) 0xca, 0, 0, 0});
+                    // Read binary block
+                    CommandAPDU command = new CommandAPDU(new byte[]{(byte) 0xff, (byte) 0xb0, (byte) 0x00, (byte) 0x04, (byte) 0x04});
+                    /*ResponseAPDU response = */channel.transmit(command);
+                    byte[] uidBytes = card.getATR().getBytes(); //response.getData();
+                    //LOG.log(Level.INFO, "Hex Readed UID:{0}", readableHex(uidBytes, 0, 4));
+                    //LOG.log(Level.INFO, "Dec Readed UID:{0}", readableDec(uidBytes, 0, 4));
+                    LOG.log(Level.INFO, "LONG DATA:" + toLong(uidBytes));
                     card.disconnect(false);
 
+                    LOG.log(Level.INFO, "Waiting for card absent on terminal {0}", id);
                     cardTerminal.waitForCardAbsent(0);                    
+                    LOG.log(Level.INFO, "Card absent on terminal {0}", id);
                 } while (endless);
             }
         } catch (CardException ex) {
