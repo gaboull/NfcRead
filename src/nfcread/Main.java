@@ -22,6 +22,14 @@ public class Main {
 
     private static final Logger LOG = Logger.getLogger(Main.class.getName());
 
+    private static String readableHex(byte[] src) {
+        StringBuilder answer = new StringBuilder();
+        for (byte b: src) {
+            answer.append(String.format("%02X", b));
+        }
+        return answer.toString();
+    }
+
     private static String readableHex(byte[] src, int from, int length) {
         StringBuilder answer = new StringBuilder();
         for (int i = from; i < from + length; i++) {
@@ -30,10 +38,18 @@ public class Main {
         return answer.toString();
     }
 
+    private static String readableDec(byte[] src) {
+        StringBuilder answer = new StringBuilder();
+        for (byte b: src) {
+            answer.append(String.format("%02d ", b & 0xFF));
+        }
+        return answer.toString();
+    }
+
     private static String readableDec(byte[] src, int from, int length) {
         StringBuilder answer = new StringBuilder();
         for (int i = from; i < from + length; i++) {
-            answer.append(String.format("%02d ", src[i] & 0xFFFFFFFFL));
+            answer.append(String.format("%02d ", src[i] & 0xFF));
         }
         return answer.toString();
     }
@@ -101,9 +117,9 @@ public class Main {
                     //CommandAPDU command = new CommandAPDU(new byte[]{(byte) 0xff, (byte) 0xb0, (byte) 0x00, (byte) 0x04, (byte) 0x04});
                     ResponseAPDU response = channel.transmit(command);
                     byte[] uidBytes = response.getData(); //card.getATR().getBytes(); 
-                    LOG.log(Level.INFO, "Hex Readed UID:{0}", readableHex(uidBytes, 0, 4));
-                    LOG.log(Level.INFO, "Dec Readed UID:{0}", readableDec(uidBytes, 0, 4));
-                    LOG.log(Level.INFO, "LONG DATA:" + toLong(uidBytes));
+                    LOG.log(Level.INFO, "Hex Readed UID:{0}", readableHex(uidBytes));
+                    LOG.log(Level.INFO, "Dec Readed UID:{0}", readableDec(uidBytes));
+                    //LOG.log(Level.INFO, "LONG DATA:" + toLong(uidBytes));
                     card.disconnect(false);
 
                     LOG.log(Level.INFO, "Waiting for card absent on terminal {0}", id);
