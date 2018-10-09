@@ -96,13 +96,13 @@ public class Main {
                     Card card = cardTerminal.connect("*");
                     CardChannel channel = card.getBasicChannel();
                     // Read UUID
-                    //CommandAPDU command = new CommandAPDU(new byte[]{(byte) 0xff, (byte) 0xca, 0, 0, 0});
+                    CommandAPDU command = new CommandAPDU(new byte[]{(byte) 0xff, (byte) 0xca, 0, 0, 0});
                     // Read binary block
-                    CommandAPDU command = new CommandAPDU(new byte[]{(byte) 0xff, (byte) 0xb0, (byte) 0x00, (byte) 0x04, (byte) 0x04});
-                    /*ResponseAPDU response = */channel.transmit(command);
-                    byte[] uidBytes = card.getATR().getBytes(); //response.getData();
-                    //LOG.log(Level.INFO, "Hex Readed UID:{0}", readableHex(uidBytes, 0, 4));
-                    //LOG.log(Level.INFO, "Dec Readed UID:{0}", readableDec(uidBytes, 0, 4));
+                    //CommandAPDU command = new CommandAPDU(new byte[]{(byte) 0xff, (byte) 0xb0, (byte) 0x00, (byte) 0x04, (byte) 0x04});
+                    ResponseAPDU response = channel.transmit(command);
+                    byte[] uidBytes = response.getData(); //card.getATR().getBytes(); 
+                    LOG.log(Level.INFO, "Hex Readed UID:{0}", readableHex(uidBytes, 0, 4));
+                    LOG.log(Level.INFO, "Dec Readed UID:{0}", readableDec(uidBytes, 0, 4));
                     LOG.log(Level.INFO, "LONG DATA:" + toLong(uidBytes));
                     card.disconnect(false);
 
