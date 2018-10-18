@@ -24,7 +24,7 @@ public class Main {
 
     private static String readableHex(byte[] src) {
         StringBuilder answer = new StringBuilder();
-        for (byte b: src) {
+        for (byte b : src) {
             answer.append(String.format("%02X", b));
         }
         return answer.toString();
@@ -40,7 +40,7 @@ public class Main {
 
     private static String readableDec(byte[] src) {
         StringBuilder answer = new StringBuilder();
-        for (byte b: src) {
+        for (byte b : src) {
             answer.append(String.format("%02d ", b & 0xFF));
         }
         return answer.toString();
@@ -53,18 +53,36 @@ public class Main {
         }
         return answer.toString();
     }
-    
+
     private static long toLong(byte[] bytes) {
         long result = 0;
         long factor = 1;
-        for (int i = 5; i < bytes.length-2; ++i) {
+        for (int i = 5; i < bytes.length - 2; ++i) {
             long value = bytes[i] & 0xffl;
             result += value * factor;
             factor *= 256l;
         }
         return result;
-    }    
-    
+    }
+
+    private static String trueHexToDec(byte[] src) {
+
+        StringBuilder answer = new StringBuilder();
+        for (int i = src.length - 1; i >= 0; --i) {
+            answer.append(String.format("%02X", src[i]).toUpperCase());
+        }
+        String digits = "0123456789ABCDEF";
+        String output = answer.toString();
+        long val = 0;
+        long nasobok = 1;
+        for (int i = output.length() - 1; i >= 0; i--) {
+            int d = digits.indexOf(output.charAt(i));
+            val = nasobok * d + val;
+            nasobok = nasobok * 16;
+        }
+        return String.valueOf(val);
+    }
+
     private static void init() throws ClassNotFoundException, NoSuchFieldException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         Class pcscterminal = Class.forName("sun.security.smartcardio.PCSCTerminals");
         Field contextId = pcscterminal.getDeclaredField("contextId");
@@ -104,7 +122,7 @@ public class Main {
             List<CardTerminal> cardTerminalList = terminalFactory.terminals().list();
             if (id <= cardTerminalList.size()) {
                 CardTerminal cardTerminal = cardTerminalList.get(id - 1);
-                do {                    
+                do {
                     LOG.log(Level.INFO, "Waiting for terminal {0}", id);
                     cardTerminal.waitForCardPresent(0);
 
@@ -119,11 +137,12 @@ public class Main {
                     byte[] uidBytes = response.getData(); //card.getATR().getBytes(); 
                     LOG.log(Level.INFO, "Hex Readed UID:{0}", readableHex(uidBytes));
                     LOG.log(Level.INFO, "Dec Readed UID:{0}", readableDec(uidBytes));
+                    LOG.log(Level.INFO, "True Dec Readed UID:{0}", trueHexToDec(uidBytes));
                     //LOG.log(Level.INFO, "LONG DATA:" + toLong(uidBytes));
                     card.disconnect(false);
 
                     LOG.log(Level.INFO, "Waiting for card absent on terminal {0}", id);
-                    cardTerminal.waitForCardAbsent(0);                    
+                    cardTerminal.waitForCardAbsent(0);
                     LOG.log(Level.INFO, "Card absent on terminal {0}", id);
                 } while (endless);
             }
